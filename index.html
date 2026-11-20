@@ -50,7 +50,7 @@
         }
 
         body {
-            padding: 12px 12px calc(92px + env(safe-area-inset-bottom));
+            padding: 12px 12px calc(78px + env(safe-area-inset-bottom));
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -248,6 +248,8 @@
         .quick-duration-wrap {
             display: flex;
             flex-direction: column;
+            align-items: center;
+            text-align: center;
             gap: 8px;
             margin-top: 12px;
         }
@@ -261,12 +263,15 @@
         .quick-duration-groups {
             display: flex;
             flex-direction: column;
+            align-items: center;
+            width: 100%;
             gap: 8px;
         }
 
         .quick-duration-group {
             display: flex;
             flex-wrap: wrap;
+            justify-content: center;
             gap: 8px;
         }
 
@@ -595,11 +600,11 @@
 
         .member-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-            gap: 8px;
-            max-height: 290px;
+            grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+            gap: 9px;
+            max-height: 440px;
             overflow-y: auto;
-            padding: 8px;
+            padding: 10px;
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             background: #f8fafc;
@@ -624,19 +629,19 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 40px;
-            padding: 7px 6px;
+            min-height: 48px;
+            padding: 10px 8px;
             border: 1.5px solid var(--border);
             border-radius: 12px;
             background: #ffffff;
             cursor: pointer;
-            font-size: 0.86rem;
+            font-size: 0.88rem;
             transition: all 0.15s;
             text-align: center;
             word-break: break-word;
             margin-bottom: 0;
             font-weight: 500;
-            line-height: 1.25;
+            line-height: 1.3;
             user-select: none;
         }
 
@@ -1027,21 +1032,35 @@
             transition: opacity 0.3s ease;
         }
 
-        /* 畫面淡入轉場 */
+        /* 畫面淡入轉場 (不對包住 fixed submit-bar 的外層設 transform，確保手機版置底按鈕正常固定) */
         .fade-view {
             opacity: 0;
-            transform: translateY(14px);
-            transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: opacity 0.42s ease;
         }
 
         .fade-view.is-visible {
             opacity: 1;
+        }
+
+        .fade-view .page-header,
+        .fade-view .section-card,
+        .status-card.fade-view {
+            transform: translateY(12px);
+            transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .fade-view.is-visible .page-header,
+        .fade-view.is-visible .section-card,
+        .status-card.fade-view.is-visible {
             transform: translateY(0);
         }
 
         @media (prefers-reduced-motion: reduce) {
             .loading-overlay,
-            .fade-view {
+            .fade-view,
+            .fade-view .page-header,
+            .fade-view .section-card,
+            .status-card.fade-view {
                 transition: none !important;
                 transform: none !important;
             }
@@ -1063,7 +1082,7 @@
         /* 平板 / 大螢幕手機 RWD (>= 560px) */
         @media (min-width: 560px) {
             body {
-                padding: 20px 20px 100px;
+                padding: 20px 20px calc(86px + env(safe-area-inset-bottom));
             }
 
             .section-card {
@@ -1077,6 +1096,7 @@
             .quick-duration-groups {
                 flex-direction: row;
                 flex-wrap: wrap;
+                justify-content: center;
                 align-items: center;
             }
 
@@ -1122,7 +1142,7 @@
             }
 
             .member-grid {
-                max-height: 430px;
+                max-height: 540px;
             }
 
             /* 桌機取消底部固定浮條，改置於右欄下方更符合滑鼠操作流 */
