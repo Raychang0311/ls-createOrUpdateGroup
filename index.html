@@ -1013,6 +1013,28 @@
             align-items: center;
             z-index: 9999;
             flex-direction: column;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        /* 畫面淡入轉場 */
+        .fade-view {
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .fade-view.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .loading-overlay,
+            .fade-view {
+                transition: none !important;
+                transform: none !important;
+            }
         }
 
         .spinner {
@@ -1107,7 +1129,7 @@
 </div>
 
 <!-- 1. 需要 LINE 登入提示 -->
-<div class="status-card" id="loginView" style="display: none;">
+<div class="status-card fade-view" id="loginView" style="display: none;">
     <div class="status-icon">🔑</div>
     <h2 class="status-title">請先登入 LINE 驗證身分</h2>
     <p class="status-desc">
@@ -1117,7 +1139,7 @@
 </div>
 
 <!-- 2. 非群組成員提示 (建立揪團無權限) -->
-<div class="status-card" id="unauthorizedView" style="display: none;">
+<div class="status-card fade-view" id="unauthorizedView" style="display: none;">
     <div class="status-icon">🚫</div>
     <h2 class="status-title">非群組成員</h2>
     <p class="status-desc">
@@ -1128,7 +1150,7 @@
 </div>
 
 <!-- 3. 非主揪導轉提示 -->
-<div class="status-card" id="redirectView" style="display: none;">
+<div class="status-card fade-view" id="redirectView" style="display: none;">
     <div class="status-icon">🔄</div>
     <h2 class="status-title">前往揪團詳情頁</h2>
     <p class="status-desc">
@@ -1138,7 +1160,7 @@
 </div>
 
 <!-- 4. 錯誤提示 -->
-<div class="status-card" id="errorView" style="display: none;">
+<div class="status-card fade-view" id="errorView" style="display: none;">
     <div class="status-icon">⚠️</div>
     <h2 class="status-title" id="errorTitle">無法載入頁面</h2>
     <p class="status-desc" id="errorDesc">發生未知錯誤，請稍後再試。</p>
@@ -1146,7 +1168,7 @@
 </div>
 
 <!-- 5. 主要表單區塊 (建立 / 編輯共用) -->
-<div class="app-shell" id="formContainer" style="display: none;">
+<div class="app-shell fade-view" id="formContainer" style="display: none;">
     <header class="page-header">
         <div class="header-title-wrap">
             <span class="mode-pill" id="modePill">✨ 新增活動</span>
@@ -1238,16 +1260,14 @@
                             <label style="margin-bottom: 0;">活動前提醒</label>
                             <span id="remindBadge" class="remind-badge">不提醒 (關閉)</span>
                         </div>
-                        <input type="range" id="remindSlider" min="0" max="12" step="0.5" value="0" class="custom-range">
+                        <input type="range" id="remindSlider" min="0" max="24" step="0.5" value="0" class="custom-range">
                         <input type="hidden" name="remindHours" id="remindHours" value="">
                         <div class="slider-ticks">
                             <span>關閉</span>
-                            <span>2h</span>
-                            <span>4h</span>
                             <span>6h</span>
-                            <span>8h</span>
-                            <span>10h</span>
                             <span>12h</span>
+                            <span>18h</span>
+                            <span>24h</span>
                         </div>
                         <small class="helper-hint">
                             💡 啟用後，系統將在活動開始前於群組自動標註 (@Tag) 所有出席者。
@@ -1259,14 +1279,13 @@
                             <label style="margin-bottom: 0;">人數限制</label>
                             <span id="limitBadge" class="remind-badge">無限制</span>
                         </div>
-                        <input type="range" id="limitSlider" min="0" max="100" step="1" value="0" class="custom-range">
+                        <input type="range" id="limitSlider" min="0" max="75" step="1" value="0" class="custom-range">
                         <input type="hidden" name="limit" id="limit" value="99">
                         <div class="slider-ticks">
                             <span>無限制</span>
                             <span>25人</span>
                             <span>50人</span>
                             <span>75人</span>
-                            <span>100人</span>
                         </div>
                     </div>
                 </section>
@@ -2043,7 +2062,7 @@
             limitBadge.textContent = '無限制';
             limitBadge.classList.remove('active');
         } else {
-            limitSlider.value = limitVal;
+            limitSlider.value = Math.min(limitVal, 75);
             limitInput.value = limitVal;
             limitBadge.textContent = limitVal + ' 人';
             limitBadge.classList.add('active');
@@ -2226,12 +2245,25 @@
     }
 
     // --- 視圖與導覽控制 ---
+    let loadingHideTimer = null;
 
     function showView(viewId) {
         const views = ['loginView', 'unauthorizedView', 'redirectView', 'errorView', 'formContainer'];
         views.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.style.display = (id === viewId) ? 'block' : 'none';
+            if (!el) return;
+            if (id === viewId) {
+                el.classList.remove('is-visible');
+                el.style.display = 'block';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        el.classList.add('is-visible');
+                    });
+                });
+            } else {
+                el.classList.remove('is-visible');
+                el.style.display = 'none';
+            }
         });
     }
 
@@ -2245,7 +2277,24 @@
         const overlay = document.getElementById('loadingOverlay');
         const textEl = document.getElementById('loadingText');
         if (textEl && text) textEl.textContent = text;
-        overlay.style.display = show ? 'flex' : 'none';
+
+        if (loadingHideTimer) {
+            clearTimeout(loadingHideTimer);
+            loadingHideTimer = null;
+        }
+
+        if (show) {
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+            });
+        } else {
+            overlay.style.opacity = '0';
+            loadingHideTimer = setTimeout(() => {
+                overlay.style.display = 'none';
+                loadingHideTimer = null;
+            }, 300);
+        }
     }
 
     function alertError(msg) {
