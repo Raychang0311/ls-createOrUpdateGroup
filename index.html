@@ -54,6 +54,7 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            overflow-x: clip;
         }
 
         /* 主容器 (手機優先，桌機放寬並支援雙欄) */
@@ -600,7 +601,7 @@
 
         .member-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 9px;
             max-height: 440px;
             overflow-y: auto;
@@ -1079,6 +1080,33 @@
             to { transform: rotate(360deg); }
         }
 
+        /* 窄螢幕手機微調 (含 iPhone X 375px) */
+        @media (max-width: 400px) {
+            .page-header {
+                padding: 16px 16px;
+            }
+
+            .section-card {
+                padding: 16px 14px;
+            }
+
+            .member-grid {
+                gap: 7px;
+                padding: 8px;
+            }
+
+            .member-chip {
+                padding: 8px 4px;
+                font-size: 0.84rem;
+                min-height: 46px;
+            }
+
+            .duration-chip {
+                padding: 6px 12px;
+                font-size: 0.82rem;
+            }
+        }
+
         /* 平板 / 大螢幕手機 RWD (>= 560px) */
         @media (min-width: 560px) {
             body {
@@ -1142,6 +1170,7 @@
             }
 
             .member-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
                 max-height: 540px;
             }
 
@@ -1276,7 +1305,7 @@
                     <div class="form-group">
                         <label for="locationInput">活動地點（選填）</label>
                         <div class="location-input-container" id="locationInputContainer">
-                            <input type="text" id="locationInput" placeholder="搜尋地名或地址（如：大安運動中心）" autocomplete="off">
+                            <input type="text" id="locationInput" placeholder="搜尋地名（如：大安運動中心）" autocomplete="off">
                             <span id="locationLoading" class="location-loading-tag">搜尋中...</span>
                             <div id="autocompleteDropdown" class="autocomplete-dropdown" style="display:none;"></div>
                         </div>
@@ -1349,7 +1378,7 @@
                     <div class="member-toolbar">
                         <div class="member-search-wrap">
                             <span class="member-search-icon">🔍</span>
-                            <input type="search" id="memberSearchInput" class="member-search-input" placeholder="輸入群友名稱搜尋..." autocomplete="off">
+                            <input type="search" id="memberSearchInput" class="member-search-input" placeholder="搜尋群友名稱..." autocomplete="off">
                             <button type="button" id="memberSearchClear" class="member-search-clear" aria-label="清除搜尋" onclick="clearMemberSearch()">✕</button>
                         </div>
                         <button type="button" id="onlySelectedToggle" class="filter-selected-btn" onclick="toggleOnlySelected()">僅看已選</button>
