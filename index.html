@@ -288,7 +288,7 @@
             position: relative;
         }
 
-        .location-input-container input {
+        .location-input-container.is-searching input {
             padding-right: 80px;
         }
 
@@ -718,17 +718,55 @@
             max-width: calc(100vw - 24px) !important;
         }
 
-        .flatpickr-months {
-            background: var(--primary) !important;
-            padding: 6px 4px;
-            align-items: center;
+        .flatpickr-calendar input,
+        .flatpickr-calendar select {
+            min-height: 0 !important;
+            box-shadow: none !important;
         }
 
-        .flatpickr-months .flatpickr-month,
-        .flatpickr-current-month .flatpickr-monthDropdown-months,
-        .flatpickr-current-month input.cur-year {
+        .flatpickr-months {
+            background: var(--primary) !important;
+            height: 50px !important;
+            padding: 6px 8px !important;
+            align-items: center !important;
+            position: relative !important;
+        }
+
+        .flatpickr-months .flatpickr-month {
+            height: 38px !important;
+            line-height: 38px !important;
+            overflow: visible !important;
+            color: #ffffff !important;
+            fill: #ffffff !important;
+        }
+
+        .flatpickr-current-month {
+            position: static !important;
+            width: 100% !important;
+            height: 38px !important;
+            padding: 0 32px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            font-size: 1rem !important;
+            line-height: 1.2 !important;
+        }
+
+        .flatpickr-current-month .flatpickr-monthDropdown-months {
+            width: auto !important;
+            height: 32px !important;
+            padding: 2px 6px !important;
+            margin: 0 !important;
+            background: rgba(255, 255, 255, 0.18) !important;
+            border: none !important;
+            border-radius: 8px !important;
             color: #ffffff !important;
             font-weight: 700 !important;
+            font-size: 0.95rem !important;
+            line-height: 28px !important;
+            appearance: auto !important;
+            -webkit-appearance: menulist !important;
         }
 
         .flatpickr-current-month .flatpickr-monthDropdown-months option {
@@ -736,11 +774,34 @@
             background: #ffffff;
         }
 
+        .flatpickr-current-month .numInputWrapper {
+            width: 70px !important;
+            height: 32px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+
+        .flatpickr-current-month input.cur-year {
+            width: 100% !important;
+            height: 32px !important;
+            padding: 2px 6px !important;
+            margin: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 0.98rem !important;
+            line-height: 28px !important;
+            text-align: center !important;
+        }
+
         .flatpickr-months .flatpickr-prev-month,
         .flatpickr-months .flatpickr-next-month {
             color: #ffffff !important;
             fill: #ffffff !important;
-            padding: 10px !important;
+            height: 50px !important;
+            padding: 15px 12px !important;
+            z-index: 3 !important;
         }
 
         .flatpickr-months .flatpickr-prev-month svg,
@@ -795,18 +856,48 @@
             border-color: var(--primary-light) !important;
         }
 
+        /* 隱藏預設會觸發鍵盤的時間輸入框，改用無鍵盤下拉選單 */
         .flatpickr-time {
-            border-top: 1px solid #e2e8f0 !important;
-            background: #f8fafc !important;
-            height: 48px !important;
-            max-height: 48px !important;
-            line-height: 48px !important;
+            display: none !important;
         }
 
-        .flatpickr-time input {
-            font-size: 1.05rem !important;
-            font-weight: 700 !important;
+        .flatpickr-custom-time {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .flatpickr-time-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #475569;
+            margin-right: 2px;
+        }
+
+        .flatpickr-time-select {
+            width: auto !important;
+            height: 36px !important;
+            padding: 4px 10px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            border-radius: 10px !important;
+            background: #ffffff !important;
             color: #1e293b !important;
+            font-size: 0.95rem !important;
+            font-weight: 700 !important;
+            font-family: inherit !important;
+            cursor: pointer;
+            appearance: auto !important;
+            -webkit-appearance: menulist !important;
+        }
+
+        .flatpickr-time-sep {
+            font-weight: 700;
+            color: #475569;
+            font-size: 1rem;
         }
 
         .flatpickr-confirm-bar {
@@ -1066,17 +1157,13 @@
 
     <form id="groupForm">
         <input type="hidden" name="seqId" id="seqId" value="" />
+        <input type="hidden" name="host" id="host" value="" />
 
         <div class="form-layout">
             <!-- 左欄 (手機依序呈現)：基本資訊 / 時間地點 / 提醒與人數 -->
             <div class="form-col col-left">
                 <section class="section-card">
                     <h3 class="section-title">📝 活動基本資訊</h3>
-                    <div class="form-group">
-                        <label for="host">主揪身分<span class="req">*</span></label>
-                        <select name="host" id="host" disabled></select>
-                    </div>
-
                     <div class="form-group">
                         <label for="groupTitle">揪團標題<span class="req">*</span></label>
                         <input type="text" name="groupTitle" id="groupTitle" placeholder="例如：週五微醺小聚 / 歡樂羽球團" maxlength="60" />
@@ -1108,18 +1195,19 @@
                             </div>
                         </div>
                         <div class="quick-duration-row">
-                            <span class="quick-duration-label">⏱️ 快速設定活動時長：</span>
-                            <button type="button" class="duration-chip" onclick="applyQuickDuration(1)">+1 小時</button>
-                            <button type="button" class="duration-chip" onclick="applyQuickDuration(2)">+2 小時</button>
-                            <button type="button" class="duration-chip" onclick="applyQuickDuration(3)">+3 小時</button>
-                            <button type="button" class="duration-chip" onclick="applyQuickDuration(4)">+4 小時</button>
+                            <span class="quick-duration-label">⏱️ 增加結束時間（可連按累加）：</span>
+                            <button type="button" class="duration-chip" onclick="addQuickDuration(15)">+15分鐘</button>
+                            <button type="button" class="duration-chip" onclick="addQuickDuration(30)">+30分鐘</button>
+                            <button type="button" class="duration-chip" onclick="addQuickDuration(60)">+1小時</button>
+                            <button type="button" class="duration-chip" onclick="addQuickDuration(120)">+2小時</button>
+                            <button type="button" class="duration-chip" onclick="addQuickDuration(180)">+3小時</button>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="locationInput">活動地點（選填）</label>
-                        <div class="location-input-container">
-                            <input type="text" id="locationInput" placeholder="輸入地名或地址搜尋（如：大安運動中心）" autocomplete="off">
+                        <div class="location-input-container" id="locationInputContainer">
+                            <input type="text" id="locationInput" placeholder="搜尋地名或地址（如：大安運動中心）" autocomplete="off">
                             <span id="locationLoading" class="location-loading-tag">搜尋中...</span>
                             <div id="autocompleteDropdown" class="autocomplete-dropdown" style="display:none;"></div>
                         </div>
@@ -1171,14 +1259,14 @@
                             <label style="margin-bottom: 0;">人數限制</label>
                             <span id="limitBadge" class="remind-badge">無限制</span>
                         </div>
-                        <input type="range" id="limitSlider" min="0" max="40" step="1" value="0" class="custom-range">
+                        <input type="range" id="limitSlider" min="0" max="100" step="1" value="0" class="custom-range">
                         <input type="hidden" name="limit" id="limit" value="99">
                         <div class="slider-ticks">
                             <span>無限制</span>
-                            <span>10人</span>
-                            <span>20人</span>
-                            <span>30人</span>
-                            <span>40人</span>
+                            <span>25人</span>
+                            <span>50人</span>
+                            <span>75人</span>
+                            <span>100人</span>
                         </div>
                     </div>
                 </section>
@@ -1250,6 +1338,8 @@
 
     /**
      * 初始化 Flatpickr 現代化日期時間選擇器
+     * - 禁用預設時間輸入框避免跳出手機鍵盤與頁面跑版，改用無鍵盤下拉選單
+     * - 攔截滑動誤觸，僅在點擊「確定」或真正點擊畫面其他處時關閉
      */
     function initDatePickers() {
         const zhTwLocale = (window.flatpickr && flatpickr.l10ns && (flatpickr.l10ns['zh-tw'] || flatpickr.l10ns.zh_tw)) || {
@@ -1266,39 +1356,151 @@
             amPM: ['上午', '下午']
         };
 
-        const addCalendarActions = function(selectedDates, dateStr, instance) {
-            if (!instance || !instance.calendarContainer || instance.calendarContainer.querySelector('.flatpickr-confirm-bar')) {
-                return;
+        const pad2 = n => String(n).padStart(2, '0');
+
+        const syncCustomTimeUI = function(instance) {
+            if (!instance || !instance.calendarContainer) return;
+            const hourSel = instance.calendarContainer.querySelector('.fp-hour-select');
+            const minSel = instance.calendarContainer.querySelector('.fp-minute-select');
+            if (!hourSel || !minSel) return;
+
+            const dt = instance.selectedDates && instance.selectedDates[0];
+            if (dt) {
+                hourSel.value = pad2(dt.getHours());
+                const roundedMin = Math.floor(dt.getMinutes() / 15) * 15;
+                minSel.value = pad2(roundedMin);
+            } else {
+                const defH = (instance.config && typeof instance.config.defaultHour === 'number') ? instance.config.defaultHour : 19;
+                const defM = (instance.config && typeof instance.config.defaultMinute === 'number') ? instance.config.defaultMinute : 0;
+                hourSel.value = pad2(defH);
+                minSel.value = pad2(Math.floor(defM / 15) * 15);
             }
-            const bar = document.createElement('div');
-            bar.className = 'flatpickr-confirm-bar';
+        };
 
-            const todayBtn = document.createElement('button');
-            todayBtn.type = 'button';
-            todayBtn.className = 'flatpickr-today-btn';
-            todayBtn.textContent = '今天現在';
-            todayBtn.addEventListener('click', function() {
-                const now = new Date();
-                now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
-                instance.setDate(now, true);
-            });
+        const setupCustomCalendar = function(defaultHour, defaultMinute) {
+            return function(selectedDates, dateStr, instance) {
+                if (!instance || !instance.calendarContainer) return;
 
-            const doneBtn = document.createElement('button');
-            doneBtn.type = 'button';
-            doneBtn.className = 'flatpickr-done-btn';
-            doneBtn.textContent = '✓ 確定';
-            doneBtn.addEventListener('click', function() {
-                if (instance.selectedDates.length === 0) {
-                    const fallback = new Date();
-                    fallback.setMinutes(Math.ceil(fallback.getMinutes() / 15) * 15, 0, 0);
-                    instance.setDate(fallback, true);
+                // 防止 Flatpickr 在點選日期後自動 focus 時間輸入框導致手機鍵盤彈出
+                if (instance.hourElement) {
+                    instance.hourElement.readOnly = true;
+                    instance.hourElement.tabIndex = -1;
+                    instance.hourElement.setAttribute('inputmode', 'none');
+                    instance.hourElement.focus = function() {};
                 }
-                instance.close();
-            });
+                if (instance.minuteElement) {
+                    instance.minuteElement.readOnly = true;
+                    instance.minuteElement.tabIndex = -1;
+                    instance.minuteElement.setAttribute('inputmode', 'none');
+                    instance.minuteElement.focus = function() {};
+                }
 
-            bar.appendChild(todayBtn);
-            bar.appendChild(doneBtn);
-            instance.calendarContainer.appendChild(bar);
+                // 接管 close()，避免手機往上滑動時因 scroll / touchstart / blur 誤關
+                if (!instance._hasCustomCloseGuard) {
+                    instance._hasCustomCloseGuard = true;
+                    const rawClose = instance.close.bind(instance);
+                    let allowExplicitClose = false;
+                    instance._forceClose = function() {
+                        allowExplicitClose = true;
+                        rawClose();
+                        allowExplicitClose = false;
+                    };
+                    instance.close = function() {
+                        if (allowExplicitClose) {
+                            rawClose();
+                        }
+                    };
+                }
+
+                if (instance.calendarContainer.querySelector('.flatpickr-confirm-bar')) {
+                    syncCustomTimeUI(instance);
+                    return;
+                }
+
+                // 自訂觸控時間列 (時 / 分 下拉選單，絕不彈出鍵盤)
+                const timeBar = document.createElement('div');
+                timeBar.className = 'flatpickr-custom-time';
+
+                const timeLabel = document.createElement('span');
+                timeLabel.className = 'flatpickr-time-label';
+                timeLabel.textContent = '🕒 時間';
+
+                const hourSel = document.createElement('select');
+                hourSel.className = 'flatpickr-time-select fp-hour-select';
+                for (let h = 0; h < 24; h++) {
+                    const opt = document.createElement('option');
+                    opt.value = pad2(h);
+                    opt.textContent = pad2(h) + ' 時';
+                    hourSel.appendChild(opt);
+                }
+
+                const sep = document.createElement('span');
+                sep.className = 'flatpickr-time-sep';
+                sep.textContent = ':';
+
+                const minSel = document.createElement('select');
+                minSel.className = 'flatpickr-time-select fp-minute-select';
+                [0, 15, 30, 45].forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = pad2(m);
+                    opt.textContent = pad2(m) + ' 分';
+                    minSel.appendChild(opt);
+                });
+
+                const applyTimeChange = function() {
+                    const base = (instance.selectedDates && instance.selectedDates[0])
+                        ? new Date(instance.selectedDates[0].getTime())
+                        : new Date();
+                    base.setHours(parseInt(hourSel.value, 10), parseInt(minSel.value, 10), 0, 0);
+                    instance.setDate(base, true);
+                };
+
+                hourSel.addEventListener('change', applyTimeChange);
+                minSel.addEventListener('change', applyTimeChange);
+
+                timeBar.appendChild(timeLabel);
+                timeBar.appendChild(hourSel);
+                timeBar.appendChild(sep);
+                timeBar.appendChild(minSel);
+
+                // 底部操作列 (今天現在 / 確定)
+                const bar = document.createElement('div');
+                bar.className = 'flatpickr-confirm-bar';
+
+                const todayBtn = document.createElement('button');
+                todayBtn.type = 'button';
+                todayBtn.className = 'flatpickr-today-btn';
+                todayBtn.textContent = '今天現在';
+                todayBtn.addEventListener('click', function() {
+                    const now = new Date();
+                    now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
+                    instance.setDate(now, true);
+                    syncCustomTimeUI(instance);
+                });
+
+                const doneBtn = document.createElement('button');
+                doneBtn.type = 'button';
+                doneBtn.className = 'flatpickr-done-btn';
+                doneBtn.textContent = '✓ 確定';
+                doneBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (instance.selectedDates.length === 0) {
+                        const fallback = new Date();
+                        fallback.setHours(parseInt(hourSel.value, 10), parseInt(minSel.value, 10), 0, 0);
+                        instance.setDate(fallback, true);
+                    }
+                    if (instance._forceClose) instance._forceClose();
+                });
+
+                bar.appendChild(todayBtn);
+                bar.appendChild(doneBtn);
+                instance.calendarContainer.appendChild(timeBar);
+                instance.calendarContainer.appendChild(bar);
+
+                hourSel.value = pad2(defaultHour);
+                minSel.value = pad2(defaultMinute);
+                syncCustomTimeUI(instance);
+            };
         };
 
         const baseConfig = {
@@ -1309,14 +1511,23 @@
             locale: zhTwLocale,
             disableMobile: true,
             allowInput: false,
-            onReady: addCalendarActions
+            clickOpens: true,
+            closeOnSelect: false
         };
 
         startPicker = flatpickr('#startDate', Object.assign({}, baseConfig, {
             minDate: 'today',
             defaultHour: 19,
             defaultMinute: 0,
-            onChange: function(selectedDates) {
+            onReady: setupCustomCalendar(19, 0),
+            onOpen: function(selectedDates, dateStr, instance) {
+                if (endPicker && endPicker.isOpen && endPicker._forceClose) {
+                    endPicker._forceClose();
+                }
+                syncCustomTimeUI(instance);
+            },
+            onChange: function(selectedDates, dateStr, instance) {
+                syncCustomTimeUI(instance);
                 if (!selectedDates || selectedDates.length === 0) return;
                 const startDt = selectedDates[0];
                 if (endPicker) {
@@ -1324,7 +1535,8 @@
                     const currentEnd = endPicker.selectedDates[0];
                     if (!currentEnd || currentEnd < startDt) {
                         const suggestedEnd = new Date(startDt.getTime() + 2 * 60 * 60 * 1000);
-                        endPicker.setDate(suggestedEnd, true);
+                        endPicker.setDate(suggestedEnd, false);
+                        syncCustomTimeUI(endPicker);
                     }
                 }
             }
@@ -1333,38 +1545,109 @@
         endPicker = flatpickr('#endDate', Object.assign({}, baseConfig, {
             minDate: 'today',
             defaultHour: 21,
-            defaultMinute: 0
+            defaultMinute: 0,
+            onReady: setupCustomCalendar(21, 0),
+            onOpen: function(selectedDates, dateStr, instance) {
+                if (startPicker && startPicker.isOpen && startPicker._forceClose) {
+                    startPicker._forceClose();
+                }
+                syncCustomTimeUI(instance);
+            },
+            onChange: function(selectedDates, dateStr, instance) {
+                syncCustomTimeUI(instance);
+            }
         }));
+
+        // 全域判斷：唯有「真正點擊 (非滑動)」畫面其他處時，才關閉開啟中的日曆小工具
+        let touchOrigin = null;
+        let suppressNextMouseClick = false;
+
+        const closeOpenPickersIfOutside = function(target) {
+            if (!target) return;
+            if (target.closest('.flatpickr-calendar') || target.id === 'startDate' || target.id === 'endDate') {
+                return;
+            }
+            if (startPicker && startPicker.isOpen && startPicker._forceClose) {
+                startPicker._forceClose();
+            }
+            if (endPicker && endPicker.isOpen && endPicker._forceClose) {
+                endPicker._forceClose();
+            }
+        };
+
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches && e.touches.length === 1) {
+                touchOrigin = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            } else {
+                touchOrigin = null;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            if (!touchOrigin || !e.changedTouches || e.changedTouches.length === 0) {
+                touchOrigin = null;
+                return;
+            }
+            const t = e.changedTouches[0];
+            const dist = Math.hypot(t.clientX - touchOrigin.x, t.clientY - touchOrigin.y);
+            touchOrigin = null;
+
+            // 位移小於 10px 才視為點擊，超過則視為上下滑動瀏覽，不關閉小工具
+            if (dist < 10) {
+                suppressNextMouseClick = true;
+                setTimeout(() => { suppressNextMouseClick = false; }, 400);
+                closeOpenPickersIfOutside(e.target);
+            }
+        }, { passive: true });
+
+        document.addEventListener('click', function(e) {
+            if (suppressNextMouseClick) return;
+            closeOpenPickersIfOutside(e.target);
+        });
     }
 
     /**
-     * 快速設定結束時間 (從開始時間加 N 小時，若尚未選開始時間則以最接近的整刻起算)
+     * 累加增加結束時間 (可重複點擊累加：15分鐘 / 30分鐘 / 1小時 / 2小時 / 3小時)
      */
-    function applyQuickDuration(hours) {
-        let baseDate = (startPicker && startPicker.selectedDates && startPicker.selectedDates[0])
+    function addQuickDuration(minutes) {
+        let startDt = (startPicker && startPicker.selectedDates && startPicker.selectedDates[0])
             ? new Date(startPicker.selectedDates[0].getTime())
             : null;
 
-        if (!baseDate) {
+        if (!startDt) {
             const rawStart = document.getElementById('startDate').value.trim();
             if (rawStart) {
-                const parsed = new Date(rawStart);
-                if (!isNaN(parsed.getTime())) baseDate = parsed;
+                const parsedStart = new Date(rawStart);
+                if (!isNaN(parsedStart.getTime())) startDt = parsedStart;
             }
         }
 
-        if (!baseDate) {
-            baseDate = new Date();
-            baseDate.setMinutes(Math.ceil(baseDate.getMinutes() / 15) * 15, 0, 0);
-            if (startPicker) startPicker.setDate(baseDate, false);
+        if (!startDt) {
+            startDt = new Date();
+            startDt.setMinutes(Math.ceil(startDt.getMinutes() / 15) * 15, 0, 0);
+            if (startPicker) startPicker.setDate(startDt, false);
         }
 
-        const endDate = new Date(baseDate.getTime() + hours * 60 * 60 * 1000);
+        let currentEnd = (endPicker && endPicker.selectedDates && endPicker.selectedDates[0])
+            ? new Date(endPicker.selectedDates[0].getTime())
+            : null;
+
+        if (!currentEnd) {
+            const rawEnd = document.getElementById('endDate').value.trim();
+            if (rawEnd) {
+                const parsedEnd = new Date(rawEnd);
+                if (!isNaN(parsedEnd.getTime())) currentEnd = parsedEnd;
+            }
+        }
+
+        const baseForAdd = (currentEnd && currentEnd >= startDt) ? currentEnd : startDt;
+        const newEnd = new Date(baseForAdd.getTime() + minutes * 60 * 1000);
+
         if (endPicker) {
-            endPicker.set('minDate', baseDate);
-            endPicker.setDate(endDate, true);
+            endPicker.set('minDate', startDt);
+            endPicker.setDate(newEnd, true);
         } else {
-            document.getElementById('endDate').value = formatDisplayDateTime(endDate);
+            document.getElementById('endDate').value = formatDisplayDateTime(newEnd);
         }
     }
 
@@ -1645,19 +1928,22 @@
         document.getElementById('submitBtn').textContent = '送出建立揪團';
         document.getElementById('seqId').value = '';
 
-        let hostHtml = '';
+        let hostValue = '';
         let hostDisplayName = '未知';
         let memberHtml = '';
         const targetUid = String(userId).trim().toLowerCase();
 
         memberList.forEach((m, idx) => {
             const isMe = String(m.id).trim().toLowerCase() === targetUid;
-            const safeVal = escapeHtmlAttr(m.id + '@' + m.name);
+            const rawVal = m.id + '@' + m.name;
+            const safeVal = escapeHtmlAttr(rawVal);
             const safeNameAttr = escapeHtmlAttr((m.name || '').toLowerCase());
             const safeName = escapeHtml(m.name);
 
-            if (isMe) hostDisplayName = m.name || hostDisplayName;
-            hostHtml += `<option value="${safeVal}" ${isMe ? 'selected' : ''}>${safeName}</option>`;
+            if (isMe) {
+                hostValue = rawVal;
+                hostDisplayName = m.name || hostDisplayName;
+            }
 
             if (!isMe) {
                 memberHtml += `
@@ -1670,7 +1956,7 @@
 
         memberHtml += `<div class="member-empty-state" id="memberEmptyState">查無符合關鍵字的群友</div>`;
         document.getElementById('headerHostChip').textContent = '主揪：' + hostDisplayName;
-        document.getElementById('host').innerHTML = hostHtml;
+        document.getElementById('host').value = hostValue;
         document.getElementById('initMemberBlock').innerHTML = memberHtml;
 
         if (startPicker) startPicker.set('minDate', 'today');
@@ -1692,19 +1978,22 @@
         const hostIdLower = String(info.hostId || '').trim().toLowerCase();
         const joinedLowerSet = new Set((info.joinedList || []).map(id => String(id).trim().toLowerCase()));
 
-        let hostHtml = '<option value=""></option>';
+        let hostValue = '';
         let hostDisplayName = '主揪';
         let memberHtml = '';
 
         memberList.forEach((m, idx) => {
             const mIdLower = String(m.id).trim().toLowerCase();
             const isHost = mIdLower === hostIdLower;
-            const safeVal = escapeHtmlAttr(m.id + '@' + m.name);
+            const rawVal = m.id + '@' + m.name;
+            const safeVal = escapeHtmlAttr(rawVal);
             const safeNameAttr = escapeHtmlAttr((m.name || '').toLowerCase());
             const safeName = escapeHtml(m.name);
 
-            if (isHost) hostDisplayName = m.name || hostDisplayName;
-            hostHtml += `<option value="${safeVal}" ${isHost ? 'selected' : ''}>${safeName}</option>`;
+            if (isHost) {
+                hostValue = rawVal;
+                hostDisplayName = m.name || hostDisplayName;
+            }
 
             if (!isHost) {
                 const isJoined = joinedLowerSet.has(mIdLower);
@@ -1718,7 +2007,7 @@
 
         memberHtml += `<div class="member-empty-state" id="memberEmptyState">查無符合關鍵字的群友</div>`;
         document.getElementById('headerHostChip').textContent = '主揪：' + hostDisplayName;
-        document.getElementById('host').innerHTML = hostHtml;
+        document.getElementById('host').value = hostValue;
         document.getElementById('initMemberBlock').innerHTML = memberHtml;
 
         document.getElementById('groupTitle').value = info.groupTitle || '';
@@ -2037,10 +2326,21 @@
         currentSessionToken = null;
     }
 
+    function setLocationLoading(show, text) {
+        const loading = document.getElementById('locationLoading');
+        const container = document.getElementById('locationInputContainer');
+        if (loading) {
+            if (text) loading.innerText = text;
+            loading.style.display = show ? 'inline-block' : 'none';
+        }
+        if (container) {
+            container.classList.toggle('is-searching', Boolean(show));
+        }
+    }
+
     function handleLocationInput(val) {
         val = val ? val.trim() : '';
         const dropdown = document.getElementById('autocompleteDropdown');
-        const loading = document.getElementById('locationLoading');
 
         if (!val || (selectedLocationName && val !== selectedLocationName)) {
             selectedLocationName = '';
@@ -2051,12 +2351,11 @@
 
         if (!val) {
             dropdown.style.display = 'none';
-            loading.style.display = 'none';
+            setLocationLoading(false);
             return;
         }
 
-        loading.innerText = '搜尋中...';
-        loading.style.display = 'inline-block';
+        setLocationLoading(true, '搜尋中...');
         if (locTimeout) clearTimeout(locTimeout);
 
         locTimeout = setTimeout(() => {
@@ -2064,7 +2363,7 @@
             const token = getOrCreateSessionToken();
             callGasApi('getPlacePredictions', { input: val, sessionToken: token }, function(res) {
                 if (reqId !== latestLocReqId) return;
-                loading.style.display = 'none';
+                setLocationLoading(false);
                 if (res && res.debugError) {
                     console.warn('[Places API 診斷資訊]:', res.debugError);
                 }
@@ -2072,7 +2371,7 @@
                 renderPredictions(list);
             }, function(err) {
                 if (reqId !== latestLocReqId) return;
-                loading.style.display = 'none';
+                setLocationLoading(false);
                 console.error('Autocomplete error:', err);
             });
         }, 300);
@@ -2105,17 +2404,15 @@
         const p = currentPredictions[idx];
         if (!p) return;
         const dropdown = document.getElementById('autocompleteDropdown');
-        const loading = document.getElementById('locationLoading');
         dropdown.style.display = 'none';
 
-        loading.innerText = '載入中...';
-        loading.style.display = 'inline-block';
+        setLocationLoading(true, '載入中...');
 
         const token = currentSessionToken;
         resetSessionToken();
 
         callGasApi('getPlaceDetails', { placeId: p.placeId, sessionToken: token, fallbackData: p }, function(details) {
-            loading.style.display = 'none';
+            setLocationLoading(false);
             if (details && details.url) {
                 applySelectedLocation(details.name || p.mainText, details.url, details.address || p.address || p.secondaryText || '');
             } else {
@@ -2125,7 +2422,7 @@
                 applySelectedLocation(p.mainText, directUrl, p.address || p.secondaryText || '');
             }
         }, function() {
-            loading.style.display = 'none';
+            setLocationLoading(false);
             const directUrl = (p.lat && p.lng)
                 ? ('https://maps.google.com/?q=' + p.lat + ',' + p.lng)
                 : ('https://www.google.com/maps/place/?q=place_id:' + encodeURIComponent(p.placeId));
@@ -2169,7 +2466,7 @@
             addrEl.style.display = 'none';
         }
         document.getElementById('locationPreview').style.display = 'none';
-        document.getElementById('locationLoading').style.display = 'none';
+        setLocationLoading(false);
         document.getElementById('autocompleteDropdown').style.display = 'none';
         resetSessionToken();
     }
