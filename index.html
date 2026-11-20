@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <base target="_top" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>揪團表單</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.css" />
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // 若在 GAS 樣板環境下由後端注入，否則維持空字串 (避免在靜態環境下引發語法錯誤)
+        window.SERVER_USER_ID = ("<?= typeof serverUserId !== 'undefined' ? serverUserId : '' ?>".startsWith("<?=") ? "" : "<?= typeof serverUserId !== 'undefined' ? serverUserId : '' ?>");
+        window.SERVER_SEQ_ID = ("<?= typeof serverSeqId !== 'undefined' ? serverSeqId : '' ?>".startsWith("<?=") ? "" : "<?= typeof serverSeqId !== 'undefined' ? serverSeqId : '' ?>");
+    </script>
+
+    <style>
+        :root {
+            --primary: #4a8c72;
+            --primary-dark: #3d7a60;
+            --primary-light: #e8f5e9;
+            --bg: #f0f4f3;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-sub: #64748b;
+            --border: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px 14px 48px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 26px 24px;
+            align-self: flex-start;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: #fafafa;
+            transition: all 0.2s;
+            appearance: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 140, 114, 0.18);
+            background: #ffffff;
+        }
+
+        input:disabled,
+        select:disabled {
+            background-color: #eeeeee;
+            color: #666666;
+            cursor: not-allowed;
+        }
+
+        /* 成員選擇區 (Chips) */
+        .member-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+            border: 1px solid #eeeeee;
+            border-radius: 12px;
+            background: #fcfdfd;
+        }
+
+        .member-option {
+            position: relative;
+        }
+
+        .member-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .member-chip {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 6px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #ffffff;
+            cursor: pointer;
+            font-size: 0.88rem;
+            transition: all 0.2s;
+            text-align: center;
+            word-break: break-word;
+            margin-bottom: 0;
+            font-weight: 500;
+        }
+
+        .member-option input:checked + .member-chip {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+
+        .member-option input:disabled + .member-chip {
+            background-color: #e5e7eb;
+            border-color: #d1d5db;
+            color: #6b7280;
+            cursor: default;
+            font-style: italic;
+        }
+
+        /* 滑動桿專用樣式 */
+        .slider-container {
+            padding: 4px 0;
+        }
+
+        .remind-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .remind-badge {
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            transition: all 0.2s ease;
+        }
+
+        .remind-badge.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .custom-range {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            outline: none;
+            margin: 12px 0 6px 0;
+            cursor: pointer;
+        }
+
+        .custom-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(74, 140, 114, 0.4);
+            transition: transform 0.1s ease;
+        }
+
+        .custom-range::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .custom-range::-webkit-slider-thumb:active {
+            transform: scale(1.25);
+        }
+
+        .slider-ticks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            padding: 0 2px;
+        }
+
+        /* Autocomplete 下拉建議選單 */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .autocomplete-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.15s ease;
+            text-align: left;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background-color: #f0fdf4;
+        }
+
+        .autocomplete-icon {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .autocomplete-text {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .autocomplete-main {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .autocomplete-secondary {
+            font-size: 0.8rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 6px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.08rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(74, 140, 114, 0.28);
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        /* 狀態卡 (非群組成員 / 登入 / 錯誤 / 轉導) */
+        .status-card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 36px 26px;
+            text-align: center;
+            align-self: center;
+        }
+
+        .status-icon {
+            font-size: 3rem;
+            margin-bottom: 14px;
+        }
+
+        .status-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 10px 0;
+        }
+
+        .status-desc {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            line-height: 1.65;
+            margin: 0 0 22px 0;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .action-btn.secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .action-btn.secondary:hover {
+            background: #cbd5e1;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 46px;
+            height: 46px;
+            border: 4px solid #e5e7eb;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p id="loadingText" style="margin-top: 14px; color: #64748b; font-weight: 500;">驗證身分與載入資料中...</p>
+</div>
+
+<!-- 1. 需要 LINE 登入提示 -->
+<div class="status-card" id="loginView" style="display: none;">
+    <div class="status-icon">🔑</div>
+    <h2 class="status-title">請先登入 LINE 驗證身分</h2>
+    <p class="status-desc">
+        為確保開團與編輯權限安全，請先透過 LINE 帳號登入以確認您的群組成員身分。
+    </p>
+    <button type="button" class="action-btn" onclick="triggerLiffLogin()">使用 LINE 登入</button>
+</div>
+
+<!-- 2. 非群組成員提示 (建立揪團無權限) -->
+<div class="status-card" id="unauthorizedView" style="display: none;">
+    <div class="status-icon">🚫</div>
+    <h2 class="status-title">非群組成員</h2>
+    <p class="status-desc">
+        您目前不在 L&gt;S 群組成員名單中，無法建立揪團。<br>
+        若您剛加入群組，請先於群組內發言一次後再重新開啟此頁面。
+    </p>
+    <button type="button" class="action-btn secondary" onclick="closeCurrentPage()">關閉頁面</button>
+</div>
+
+<!-- 3. 非主揪導轉提示 -->
+<div class="status-card" id="redirectView" style="display: none;">
+    <div class="status-icon">🔄</div>
+    <h2 class="status-title">前往揪團詳情頁</h2>
+    <p class="status-desc">
+        您不是此揪團的主揪，正在為您導向揪團詳情頁面...
+    </p>
+    <a id="redirectFallbackLink" href="#" class="action-btn">立即前往詳情頁</a>
+</div>
+
+<!-- 4. 錯誤提示 -->
+<div class="status-card" id="errorView" style="display: none;">
+    <div class="status-icon">⚠️</div>
+    <h2 class="status-title" id="errorTitle">無法載入頁面</h2>
+    <p class="status-desc" id="errorDesc">發生未知錯誤，請稍後再試。</p>
+    <button type="button" class="action-btn secondary" onclick="closeCurrentPage()">關閉頁面</button>
+</div>
+
+<!-- 5. 主要表單區塊 (建立 / 編輯共用) -->
+<div class="container" id="formContainer" style="display: none;">
+    <h2 id="pageHeading">建立揪團</h2>
+    <form id="groupForm">
+        <input type="hidden" name="seqId" id="seqId" value="" />
+
+        <div class="form-group">
+            <label for="host">你是誰 <span style="color:#e53e3e;">*</span></label>
+            <select name="host" id="host" disabled></select>
+        </div>
+
+        <div class="form-group">
+            <label for="groupTitle">揪團標題 <span style="color:#e53e3e;">*</span></label>
+            <input type="text" name="groupTitle" id="groupTitle" placeholder="例如：歡樂羽球團" />
+        </div>
+
+        <div class="form-group">
+            <label for="groupContent">揪團內容 <span style="color:#e53e3e;">*</span></label>
+            <textarea name="groupContent" id="groupContent" rows="5"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>地點 (選填):</label>
+            <div class="location-input-container" style="position: relative;">
+                <input type="text" id="locationInput" placeholder="請輸入地名或地址搜尋（例如：大安運動中心）" autocomplete="off">
+                <span id="locationLoading" style="display:none; position:absolute; right:12px; top:12px; font-size:0.85rem; color:var(--primary); font-weight:bold;">搜尋中...</span>
+                <div id="autocompleteDropdown" class="autocomplete-dropdown" style="display:none;"></div>
+            </div>
+            <input type="hidden" name="locationData" id="locationData" value="">
+            <div id="locationPreview" style="display:none; margin-top:8px; padding:10px 14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; font-size:0.9rem; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                    <span>📍</span>
+                    <span id="previewLocName" style="font-weight:bold; color:#166534; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                    <span id="previewLocAddress" style="display:none; color:#4b5563; font-size:0.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                    <a id="previewLocLink" href="#" target="_blank" rel="noopener noreferrer" onclick="openExternalUrl(event, this.href)" style="color:#0284c7; font-size:0.85rem; text-decoration:none; margin-left:6px; white-space:nowrap; flex-shrink:0;">[開啟地圖 ↗]</a>
+                </div>
+                <button type="button" id="clearLocBtn" onclick="clearLocation()" style="background:none; border:none; color:#ef4444; font-size:0.85rem; cursor:pointer; padding:2px 6px; font-weight:bold; flex-shrink:0;">清除</button>
+            </div>
+            <small style="color: #64748B; font-size: 0.82rem; margin-top: 5px; display: block;">
+                💡 輸入地名或地址並從建議清單點選即可帶入（非必填；未點選建議將不儲存地點）。
+            </small>
+        </div>
+
+        <div class="form-group" style="display:flex; gap:12px;">
+            <div style="flex:1">
+                <label for="startDate">開始日期 <span style="color:#e53e3e;">*</span></label>
+                <input name="startDate" id="startDate" type="text" readonly>
+            </div>
+            <div style="flex:1">
+                <label for="endDate">結束日期 <span style="color:#e53e3e;">*</span></label>
+                <input name="endDate" id="endDate" type="text" readonly>
+            </div>
+        </div>
+
+        <div class="form-group slider-container">
+            <div class="remind-header">
+                <label style="margin-bottom: 0;">活動前提醒:</label>
+                <span id="remindBadge" class="remind-badge">不提醒 (關閉)</span>
+            </div>
+            <input type="range" id="remindSlider" min="0" max="12" step="0.5" value="0" class="custom-range">
+            <input type="hidden" name="remindHours" id="remindHours" value="">
+            <div class="slider-ticks">
+                <span>關閉</span>
+                <span>2h</span>
+                <span>4h</span>
+                <span>6h</span>
+                <span>8h</span>
+                <span>10h</span>
+                <span>12h</span>
+            </div>
+            <small style="color: #64748B; font-size: 0.85rem; margin-top: 6px; display: block;">
+                💡 啟用後，系統將在活動開始前於群組自動標註 (@Tag) 所有出席者。
+            </small>
+        </div>
+
+        <div class="form-group slider-container">
+            <div class="remind-header">
+                <label style="margin-bottom: 0;">人數限制:</label>
+                <span id="limitBadge" class="remind-badge">無限制</span>
+            </div>
+            <input type="range" id="limitSlider" min="0" max="40" step="1" value="0" class="custom-range">
+            <input type="hidden" name="limit" id="limit" value="99">
+            <div class="slider-ticks">
+                <span>無限制</span>
+                <span>10人</span>
+                <span>20人</span>
+                <span>30人</span>
+                <span>40人</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label id="memberLabel">內建成員:</label>
+            <div id="initMemberBlock" class="member-grid"></div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="submit-btn" onclick="submitGroupForm(this); return false;">送出</button>
+    </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // =========================================================================
+    // 前後端分離配置 (GitHub Pages 前端 + Google Apps Script 後端 API)
+    // =========================================================================
+    // 請於部署 createOrUpdateGroup.js 為 GAS Web App 後，填入 /exec 網址與對應 LIFF ID
+    const GAS_API_URL = "https://script.google.com/macros/s/YOUR_GAS_DEPLOYMENT_ID/exec";
+    const DEFAULT_LIFF_ID = "YOUR_LIFF_ID";
+    const GROUP_DETAIL_LIFF_BASE = "https://liff.line.me/2005700153-GqMvVinD?seqId=";
+
+    let pageMode = 'create'; // 'create' | 'edit'
+    let currentSeqId = '';
+    let currentUserId = '';
+    let isSubmitting = false;
+
+    // Places API 地點自動補全狀態變數
+    let locTimeout = null;
+    let currentSessionToken = null;
+    let currentPredictions = [];
+    let selectedLocationName = '';
+    let latestLocReqId = 0;
+    let hasAlertedReminder = false;
+
+    $.datetimepicker.setLocale('zh-TW');
+    const dateOpt = { format: 'Y/m/d H:i', step: 15, minDate: 0, scrollInput: false };
+    $('#startDate').datetimepicker(dateOpt);
+    $('#endDate').datetimepicker(dateOpt);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        bootstrapApp();
+    });
+
+    /**
+     * 從 URL 查詢參數、liff.state 或 hash 中提取參數
+     */
+    function extractQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        let val = urlParams.get(param);
+        if (val) return val;
+
+        let stateStr = urlParams.get('liff.state');
+        if (stateStr) {
+            try {
+                let decoded = decodeURIComponent(stateStr);
+                let m = decoded.match(new RegExp('[?&]' + param + '=([^&#]+)'));
+                if (m) return m[1];
+            } catch (e) {}
+        }
+
+        if (window.location.hash) {
+            try {
+                let hashStr = window.location.hash.substring(1);
+                let idx = hashStr.indexOf('?');
+                if (idx !== -1) {
+                    let hParams = new URLSearchParams(hashStr.substring(idx));
+                    let hVal = hParams.get(param);
+                    if (hVal) return hVal;
+                }
+            } catch (e) {}
+        }
+
+        return '';
+    }
+
+    /**
+     * 啟動流程：取得 seqId 與 LINE 使用者身分後向後端驗證權限
+     */
+    async function bootstrapApp() {
+        showLoading(true, '驗證身分與載入資料中...');
+
+        // 1. 解析 seqId
+        currentSeqId = (window.SERVER_SEQ_ID || extractQueryParam('seqId') || '').trim();
+
+        // 2. 若在 GAS iframe 環境，補充從 google.script.url 取得參數
+        if (window.google && google.script && google.script.url) {
+            const gasLoc = await new Promise(resolve => {
+                try {
+                    google.script.url.getLocation(loc => resolve(loc || {}));
+                } catch (e) {
+                    resolve({});
+                }
+            });
+            const p = gasLoc.parameter || {};
+            if (!currentSeqId && p.seqId) currentSeqId = String(p.seqId).trim();
+            if (!currentUserId && (p.userId || p.uid)) currentUserId = String(p.userId || p.uid).trim();
+        }
+
+        // 3. 解析伺服器注入或網址帶入之 userId
+        if (!currentUserId) {
+            currentUserId = (window.SERVER_USER_ID || extractQueryParam('userId') || extractQueryParam('uid') || '').trim();
+        }
+
+        // 4. 初始化 LINE LIFF SDK 取得真實使用者身分
+        const liffId = extractQueryParam('liffId') || DEFAULT_LIFF_ID;
+        if (window.liff && liffId && !liffId.includes('YOUR_LIFF_ID')) {
+            try {
+                await liff.init({ liffId: liffId });
+
+                if (liff.isLoggedIn()) {
+                    try {
+                        const profile = await liff.getProfile();
+                        if (profile && profile.userId) {
+                            currentUserId = String(profile.userId).trim();
+                            try {
+                                localStorage.setItem('ls_member_uid', currentUserId);
+                                if (profile.displayName) localStorage.setItem('ls_member_name', profile.displayName);
+                            } catch (e) {}
+                        }
+                    } catch (profileErr) {
+                        console.warn('liff.getProfile 失敗:', profileErr);
+                    }
+                }
+
+                if (!currentUserId) {
+                    try {
+                        const idToken = liff.getDecodedIDToken();
+                        if (idToken && idToken.sub) currentUserId = String(idToken.sub).trim();
+                    } catch (e) {}
+                }
+
+                if (!currentUserId) {
+                    try {
+                        const context = liff.getContext();
+                        if (context && context.userId) currentUserId = String(context.userId).trim();
+                    } catch (e) {}
+                }
+
+                // 外部瀏覽器未登入 LINE 時，顯示登入引導畫面
+                if (!currentUserId && !liff.isInClient() && !liff.isLoggedIn()) {
+                    showLoading(false);
+                    showView('loginView');
+                    return;
+                }
+            } catch (liffErr) {
+                console.warn('LIFF 初始化失敗:', liffErr);
+            }
+        }
+
+        // 5. 若非 LINE 環境且仍無 userId，嘗試從 localStorage 取得 (如從同網域名冊/詳情頁登入過)
+        if (!currentUserId) {
+            try {
+                const cachedUid = localStorage.getItem('ls_member_uid');
+                if (cachedUid) currentUserId = String(cachedUid).trim();
+            } catch (e) {}
+        }
+
+        if (!currentUserId) {
+            showLoading(false);
+            if (window.liff && liffId && !liffId.includes('YOUR_LIFF_ID')) {
+                showView('loginView');
+            } else {
+                showErrorView('無法驗證身分', '請於 LINE 聊天室內開啟此頁面，或確認已設定正確的 LIFF ID。');
+            }
+            return;
+        }
+
+        // 6. 向後端請求初始化與身分/主揪驗證
+        callGasApi('initPage', { seqId: currentSeqId, userId: currentUserId }, handleInitResponse, function(err) {
+            showLoading(false);
+            showErrorView('載入失敗', '連線後端伺服器失敗：' + err);
+        });
+    }
+
+    function handleInitResponse(res) {
+        if (!res || !res.success) {
+            showLoading(false);
+            const errMsg = (res && res.error) ? res.error : '找不到資料或伺服器錯誤';
+            showErrorView('無法載入頁面', errMsg);
+            return;
+        }
+
+        // 情況 1：帶了 seqId 但非主揪 -> 轉導至揪團詳情頁
+        if (res.mode === 'redirect') {
+            showLoading(false);
+            const targetUrl = res.redirectUrl || (GROUP_DETAIL_LIFF_BASE + encodeURIComponent(currentSeqId));
+            const fallbackLink = document.getElementById('redirectFallbackLink');
+            if (fallbackLink) fallbackLink.href = targetUrl;
+            showView('redirectView');
+            window.location.replace(targetUrl);
+            return;
+        }
+
+        // 情況 2：未帶 seqId 且非群組成員 -> 顯示非群組成員
+        if (res.mode === 'unauthorized') {
+            showLoading(false);
+            showView('unauthorizedView');
+            return;
+        }
+
+        // 情況 3：編輯模式 (已驗證為主揪)
+        if (res.mode === 'edit') {
+            pageMode = 'edit';
+            renderEditMode(res.groupInfo, res.memberList || []);
+            showLoading(false);
+            showView('formContainer');
+            return;
+        }
+
+        // 情況 4：建立模式 (已驗證為群組成員)
+        if (res.mode === 'create') {
+            pageMode = 'create';
+            renderCreateMode(res.currentUserId || currentUserId, res.memberList || []);
+            showLoading(false);
+            showView('formContainer');
+            return;
+        }
+
+        showLoading(false);
+        showErrorView('系統回應異常', '未知的模式狀態');
+    }
+
+    /**
+     * 渲染建立揪團表單
+     */
+    function renderCreateMode(userId, memberList) {
+        document.title = '建立揪團';
+        document.getElementById('pageHeading').textContent = '建立揪團';
+        document.getElementById('memberLabel').textContent = '內建成員:';
+        document.getElementById('submitBtn').textContent = '送出';
+        document.getElementById('seqId').value = '';
+
+        let hostHtml = '';
+        let memberHtml = '';
+        const targetUid = String(userId).trim().toLowerCase();
+
+        memberList.forEach((m, idx) => {
+            const isMe = String(m.id).trim().toLowerCase() === targetUid;
+            const safeVal = escapeHtmlAttr(m.id + '@' + m.name);
+            const safeName = escapeHtml(m.name);
+            hostHtml += `<option value="${safeVal}" ${isMe ? 'selected' : ''}>${safeName}</option>`;
+
+            if (!isMe) {
+                memberHtml += `
+                    <div class="member-option">
+                        <input type="checkbox" name="initMember" id="cb_${idx}" value="${safeVal}">
+                        <label class="member-chip" for="cb_${idx}">${safeName}</label>
+                    </div>`;
+            }
+        });
+
+        document.getElementById('host').innerHTML = hostHtml;
+        document.getElementById('initMemberBlock').innerHTML = memberHtml;
+    }
+
+    /**
+     * 渲染修改揪團表單並預填資料
+     */
+    function renderEditMode(info, memberList) {
+        document.title = '修改揪團';
+        document.getElementById('pageHeading').textContent = '修改揪團內容';
+        document.getElementById('memberLabel').textContent = '新增成員 (灰色為已參加):';
+        document.getElementById('submitBtn').textContent = '送出修改';
+        document.getElementById('seqId').value = info.seqId || currentSeqId;
+
+        const hostIdLower = String(info.hostId || '').trim().toLowerCase();
+        const joinedLowerSet = new Set((info.joinedList || []).map(id => String(id).trim().toLowerCase()));
+
+        let hostHtml = '<option value=""></option>';
+        let memberHtml = '';
+
+        memberList.forEach((m, idx) => {
+            const mIdLower = String(m.id).trim().toLowerCase();
+            const isHost = mIdLower === hostIdLower;
+            const safeVal = escapeHtmlAttr(m.id + '@' + m.name);
+            const safeName = escapeHtml(m.name);
+
+            hostHtml += `<option value="${safeVal}" ${isHost ? 'selected' : ''}>${safeName}</option>`;
+
+            if (!isHost) {
+                const isJoined = joinedLowerSet.has(mIdLower);
+                memberHtml += `
+                    <div class="member-option">
+                        <input type="checkbox" name="initMember" id="cb_${idx}" value="${safeVal}" ${isJoined ? 'checked disabled' : ''}>
+                        <label class="member-chip" for="cb_${idx}">${safeName}${isJoined ? ' (已入)' : ''}</label>
+                    </div>`;
+            }
+        });
+
+        document.getElementById('host').innerHTML = hostHtml;
+        document.getElementById('initMemberBlock').innerHTML = memberHtml;
+
+        document.getElementById('groupTitle').value = info.groupTitle || '';
+        document.getElementById('groupContent').value = info.groupContent || '';
+        document.getElementById('startDate').value = info.startDate || '';
+        document.getElementById('endDate').value = info.endDate || '';
+
+        // 初始化人數限制滑桿
+        const limitVal = parseInt(info.limit, 10);
+        if (isNaN(limitVal) || limitVal === 99) {
+            $('#limitSlider').val(0);
+            $('#limit').val('99');
+            $('#limitBadge').text('無限制').removeClass('active');
+        } else {
+            $('#limitSlider').val(limitVal);
+            $('#limit').val(limitVal);
+            $('#limitBadge').text(limitVal + ' 人').addClass('active');
+        }
+
+        // 初始化活動前提醒滑桿
+        const remindVal = parseFloat(info.remindHours);
+        if (!isNaN(remindVal) && remindVal > 0) {
+            $('#remindSlider').val(remindVal);
+            $('#remindHours').val(remindVal);
+            const rText = (remindVal === 0.5) ? '活動前 30 分鐘' : `活動前 ${remindVal} 小時`;
+            $('#remindBadge').text(rText).addClass('active');
+        } else {
+            $('#remindSlider').val(0);
+            $('#remindHours').val('');
+            $('#remindBadge').text('不提醒 (關閉)').removeClass('active');
+        }
+
+        // 初始化地點欄位 (新版 JSON {"name","url","address"})
+        if (info.locationData) {
+            try {
+                const locObj = typeof info.locationData === 'object' ? info.locationData : JSON.parse(info.locationData);
+                if (locObj && typeof locObj === 'object' && !Array.isArray(locObj) && ('name' in locObj || 'url' in locObj || 'address' in locObj)) {
+                    applySelectedLocation(locObj.name || locObj.address || '', locObj.url || '', locObj.address || '');
+                }
+            } catch (e) {
+                console.warn('忽略無效地點資料:', e);
+            }
+        }
+    }
+
+    /**
+     * 前後端雙模 API 調用器 (支援 GAS 原生環境與 GitHub Pages)
+     */
+    function callGasApi(action, params, onSuccess, onFailure) {
+        params = Object.assign({}, params || {}, {
+            action: action,
+            _t: Date.now()
+        });
+
+        // 1. 若在 GAS HtmlService 環境下直接走 google.script.run
+        if (window.google && google.script && google.script.run) {
+            const runner = google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(err => {
+                    if (onFailure) onFailure(err && err.message ? err.message : String(err));
+                });
+
+            if (action === 'initPage') {
+                runner.initCreateOrUpdateGroup(params.seqId, params.userId);
+                return;
+            } else if (action === 'createGroup') {
+                runner.createGroup(params);
+                return;
+            } else if (action === 'editGroup') {
+                runner.editGroup(params);
+                return;
+            } else if (action === 'getPlacePredictions') {
+                runner.getPlacePredictions(params.input, params.sessionToken);
+                return;
+            } else if (action === 'getPlaceDetails') {
+                runner.getPlaceDetails(params.placeId, params.sessionToken, params.fallbackData);
+                return;
+            }
+        }
+
+        // 2. GitHub Pages 環境透過 fetch 呼叫 GAS Web App (/exec)
+        if (!GAS_API_URL || GAS_API_URL.includes('YOUR_GAS_DEPLOYMENT_ID')) {
+            if (onFailure) onFailure('尚未設定 GAS_API_URL，請於 index.html 填入您的 GAS Web App 部署網址！');
+            return;
+        }
+
+        const isReadOnly = (action === 'initPage' || action === 'getPlacePredictions' || action === 'getPlaceDetails');
+
+        // 使用 text/plain 避開瀏覽器 CORS preflight (OPTIONS)
+        fetch(GAS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(params),
+            cache: 'no-store'
+        })
+            .then(r => r.json())
+            .then(onSuccess)
+            .catch(postErr => {
+                if (!isReadOnly) {
+                    if (onFailure) onFailure(postErr && postErr.message ? postErr.message : String(postErr));
+                    return;
+                }
+                const queryParams = {};
+                Object.keys(params).forEach(k => {
+                    if (params[k] !== undefined && params[k] !== null) {
+                        queryParams[k] = typeof params[k] === 'object' ? JSON.stringify(params[k]) : String(params[k]);
+                    }
+                });
+                const query = new URLSearchParams(queryParams).toString();
+                fetch(GAS_API_URL + '?' + query, { method: 'GET', cache: 'no-store' })
+                    .then(r => r.json())
+                    .then(onSuccess)
+                    .catch(err => {
+                        if (onFailure) onFailure(err && err.message ? err.message : String(err));
+                    });
+            });
+    }
+
+    // --- 視圖與導覽控制 ---
+
+    function showView(viewId) {
+        const views = ['loginView', 'unauthorizedView', 'redirectView', 'errorView', 'formContainer'];
+        views.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = (id === viewId) ? 'block' : 'none';
+        });
+    }
+
+    function showErrorView(title, desc) {
+        document.getElementById('errorTitle').textContent = title || '無法載入頁面';
+        document.getElementById('errorDesc').textContent = desc || '發生未知錯誤，請稍後再試。';
+        showView('errorView');
+    }
+
+    function showLoading(show, text) {
+        const overlay = document.getElementById('loadingOverlay');
+        const textEl = document.getElementById('loadingText');
+        if (textEl && text) textEl.textContent = text;
+        overlay.style.display = show ? 'flex' : 'none';
+    }
+
+    function alertError(msg) {
+        showLoading(false);
+        Swal.fire({ icon: 'error', text: msg, confirmButtonColor: '#4a8c72' });
+        return false;
+    }
+
+    function triggerLiffLogin() {
+        if (window.liff) {
+            try {
+                liff.login();
+                return;
+            } catch (e) {
+                console.warn('liff.login 失敗:', e);
+            }
+        }
+        if (DEFAULT_LIFF_ID && !DEFAULT_LIFF_ID.includes('YOUR_LIFF_ID')) {
+            const suffix = currentSeqId ? ('?seqId=' + encodeURIComponent(currentSeqId)) : '';
+            window.location.href = 'https://liff.line.me/' + DEFAULT_LIFF_ID + suffix;
+        }
+    }
+
+    function closeCurrentPage(fallbackSeqId) {
+        if (window.liff && typeof liff.isInClient === 'function' && liff.isInClient()) {
+            try {
+                liff.closeWindow();
+                return;
+            } catch (e) {}
+        }
+        try {
+            window.top.close();
+        } catch (e) {}
+        if (fallbackSeqId) {
+            window.location.href = GROUP_DETAIL_LIFF_BASE + encodeURIComponent(fallbackSeqId);
+        }
+    }
+
+    function openExternalUrl(event, url) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (!url || !/^https?:\/\//i.test(url)) return;
+
+        if (window.liff && typeof liff.isInClient === 'function' && liff.isInClient()) {
+            try {
+                liff.openWindow({ url: url, external: true });
+                return;
+            } catch (e) {}
+        }
+
+        let targetUrl = url;
+        if (/Line\//i.test(navigator.userAgent) && !/[?&]openExternalBrowser=1/i.test(targetUrl)) {
+            targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'openExternalBrowser=1';
+        }
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    }
+
+    // --- 滑動桿事件 ---
+
+    $('#remindSlider').on('input', function() {
+        const val = parseFloat($(this).val());
+        const hiddenInput = document.getElementById('remindHours');
+        const badge = document.getElementById('remindBadge');
+
+        if (val === 0) {
+            hiddenInput.value = '';
+            badge.innerText = '不提醒 (關閉)';
+            badge.classList.remove('active');
+        } else {
+            hiddenInput.value = val;
+            const text = (val === 0.5) ? '活動前 30 分鐘' : `活動前 ${val} 小時`;
+            badge.innerText = text;
+            badge.classList.add('active');
+        }
+    });
+
+    $('#remindSlider').on('change', function() {
+        const val = parseFloat($(this).val());
+        if (val > 0 && !hasAlertedReminder) {
+            hasAlertedReminder = true;
+            Swal.fire({
+                icon: 'info',
+                title: '活動提醒機制說明',
+                html: '<p style="text-align:left; color:#475569; font-size:0.95rem; line-height:1.6;">' +
+                    '受限於 LINE 官方機制限制，機器人<b>無法主動推播</b>訊息。<br><br>' +
+                    '到達提醒時間後，<b>當群組有人發言時</b>，機器人會立即跳出通知並<b>標註 (@Tag)</b> 所有參加成員！' +
+                    '</p>',
+                confirmButtonText: '我知道了',
+                confirmButtonColor: '#4a8c72'
+            });
+        }
+    });
+
+    $('#limitSlider').on('input', function() {
+        const val = parseInt($(this).val(), 10);
+        const hiddenInput = document.getElementById('limit');
+        const badge = document.getElementById('limitBadge');
+
+        if (val === 0) {
+            hiddenInput.value = '99';
+            badge.innerText = '無限制';
+            badge.classList.remove('active');
+        } else {
+            hiddenInput.value = val;
+            badge.innerText = val + ' 人';
+            badge.classList.add('active');
+        }
+    });
+
+    // --- Google Places API 地點自動補全 ---
+
+    function generateUUIDv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    function getOrCreateSessionToken() {
+        if (!currentSessionToken) {
+            currentSessionToken = generateUUIDv4();
+        }
+        return currentSessionToken;
+    }
+
+    function resetSessionToken() {
+        currentSessionToken = null;
+    }
+
+    function handleLocationInput(val) {
+        val = val ? val.trim() : '';
+        const dropdown = document.getElementById('autocompleteDropdown');
+        const loading = document.getElementById('locationLoading');
+
+        if (!val || (selectedLocationName && val !== selectedLocationName)) {
+            selectedLocationName = '';
+            document.getElementById('locationData').value = '';
+            const previewEl = document.getElementById('locationPreview');
+            if (previewEl) previewEl.style.display = 'none';
+        }
+
+        if (!val) {
+            dropdown.style.display = 'none';
+            loading.style.display = 'none';
+            return;
+        }
+
+        loading.innerText = '搜尋中...';
+        loading.style.display = 'inline';
+        if (locTimeout) clearTimeout(locTimeout);
+
+        locTimeout = setTimeout(() => {
+            const reqId = ++latestLocReqId;
+            const token = getOrCreateSessionToken();
+            callGasApi('getPlacePredictions', { input: val, sessionToken: token }, function(res) {
+                if (reqId !== latestLocReqId) return;
+                loading.style.display = 'none';
+                if (res && res.debugError) {
+                    console.warn('[Places API 診斷資訊]:', res.debugError);
+                }
+                const list = (res && Array.isArray(res.suggestions)) ? res.suggestions : (Array.isArray(res) ? res : []);
+                renderPredictions(list);
+            }, function(err) {
+                if (reqId !== latestLocReqId) return;
+                loading.style.display = 'none';
+                console.error('Autocomplete error:', err);
+            });
+        }, 300);
+    }
+
+    function renderPredictions(predictions) {
+        currentPredictions = predictions || [];
+        const dropdown = document.getElementById('autocompleteDropdown');
+        if (!predictions || predictions.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        let html = '';
+        predictions.forEach((p, idx) => {
+            html += `
+            <div class="autocomplete-item" onclick="selectPrediction(${idx})">
+                <span class="autocomplete-icon">📍</span>
+                <div class="autocomplete-text">
+                    <div class="autocomplete-main">${escapeHtml(p.mainText)}</div>
+                    ${p.secondaryText ? `<div class="autocomplete-secondary">${escapeHtml(p.secondaryText)}</div>` : ''}
+                </div>
+            </div>`;
+        });
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    }
+
+    function selectPrediction(idx) {
+        const p = currentPredictions[idx];
+        if (!p) return;
+        const dropdown = document.getElementById('autocompleteDropdown');
+        const loading = document.getElementById('locationLoading');
+        dropdown.style.display = 'none';
+
+        loading.innerText = '載入詳情...';
+        loading.style.display = 'inline';
+
+        const token = currentSessionToken;
+        resetSessionToken();
+
+        callGasApi('getPlaceDetails', { placeId: p.placeId, sessionToken: token, fallbackData: p }, function(details) {
+            loading.style.display = 'none';
+            if (details && details.url) {
+                applySelectedLocation(details.name || p.mainText, details.url, details.address || p.address || p.secondaryText || '');
+            } else {
+                const directUrl = (p.lat && p.lng)
+                    ? ('https://maps.google.com/?q=' + p.lat + ',' + p.lng)
+                    : ('https://www.google.com/maps/place/?q=place_id:' + encodeURIComponent(p.placeId));
+                applySelectedLocation(p.mainText, directUrl, p.address || p.secondaryText || '');
+            }
+        }, function() {
+            loading.style.display = 'none';
+            const directUrl = (p.lat && p.lng)
+                ? ('https://maps.google.com/?q=' + p.lat + ',' + p.lng)
+                : ('https://www.google.com/maps/place/?q=place_id:' + encodeURIComponent(p.placeId));
+            applySelectedLocation(p.mainText, directUrl, p.address || p.secondaryText || '');
+        });
+    }
+
+    function applySelectedLocation(name, url, address) {
+        const cleanName = String(name || '').trim();
+        const cleanUrl = String(url || '').trim();
+        const cleanAddress = String(address || '').trim();
+        selectedLocationName = cleanName;
+        $('#locationInput').val(cleanName);
+        document.getElementById('locationData').value = JSON.stringify({
+            name: cleanName,
+            url: cleanUrl,
+            address: cleanAddress
+        });
+        document.getElementById('previewLocName').innerText = cleanName;
+        const addrEl = document.getElementById('previewLocAddress');
+        if (addrEl) {
+            if (cleanAddress && cleanAddress !== cleanName) {
+                addrEl.innerText = cleanAddress;
+                addrEl.style.display = 'inline';
+            } else {
+                addrEl.innerText = '';
+                addrEl.style.display = 'none';
+            }
+        }
+        document.getElementById('previewLocLink').href = cleanUrl || '#';
+        document.getElementById('locationPreview').style.display = 'flex';
+    }
+
+    function clearLocation() {
+        selectedLocationName = '';
+        $('#locationInput').val('');
+        document.getElementById('locationData').value = '';
+        const addrEl = document.getElementById('previewLocAddress');
+        if (addrEl) {
+            addrEl.innerText = '';
+            addrEl.style.display = 'none';
+        }
+        document.getElementById('locationPreview').style.display = 'none';
+        document.getElementById('locationLoading').style.display = 'none';
+        document.getElementById('autocompleteDropdown').style.display = 'none';
+        resetSessionToken();
+    }
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.location-input-container').length) {
+            $('#autocompleteDropdown').hide();
+        }
+    });
+
+    $('#locationInput').on('input', function() {
+        handleLocationInput($(this).val());
+    });
+
+    $('#locationInput').on('paste', function() {
+        setTimeout(() => handleLocationInput($(this).val()), 100);
+    });
+
+    // --- 表單送出 (依 pageMode 切換 createGroup / editGroup) ---
+
+    function submitGroupForm(btn) {
+        if (isSubmitting) return;
+
+        const groupTitle = document.getElementById('groupTitle').value.trim();
+        const groupContent = document.getElementById('groupContent').value;
+        const startDate = document.getElementById('startDate').value.trim();
+        const endDate = document.getElementById('endDate').value.trim();
+        const host = document.getElementById('host').value;
+        const limit = parseInt(document.getElementById('limit').value, 10) || 99;
+        const remindHours = document.getElementById('remindHours').value;
+        const locationData = document.getElementById('locationData').value || '';
+        const seqId = document.getElementById('seqId').value.trim();
+
+        if (!groupTitle) return alertError('請填寫揪團標題');
+        if (!groupContent || !groupContent.trim()) return alertError('請填寫揪團內容');
+        if (!startDate || !endDate) return alertError('請填寫完整日期');
+        if (new Date(endDate) < new Date(startDate)) return alertError('結束時間不能早於開始時間');
+
+        let initMemberStr = '';
+        if (pageMode === 'edit') {
+            const existingCount = document.querySelectorAll('input[name="initMember"]:checked:disabled').length;
+            const checkedNewBoxes = document.querySelectorAll('input[name="initMember"]:checked:not([disabled])');
+            const selectedNewMembers = Array.from(checkedNewBoxes).map(cb => cb.value.split('@')[0]);
+            const total = existingCount + selectedNewMembers.length + 1;
+
+            if (limit !== 99 && limit < total) {
+                return alertError(`總人數 (${total}) 已超過設定上限 (${limit})`);
+            }
+            initMemberStr = selectedNewMembers.join(',');
+        } else {
+            const checkedBoxes = document.querySelectorAll('input[name="initMember"]:checked');
+            const selectedMembers = Array.from(checkedBoxes).map(cb => cb.value.split('@')[0]);
+            const totalCount = 1 + selectedMembers.length;
+
+            if (limit !== 99 && limit < totalCount) {
+                return alertError(`人數 (${totalCount}) 已超過上限 (${limit})`);
+            }
+            initMemberStr = selectedMembers.join(',');
+        }
+
+        const payload = {
+            seqId: seqId,
+            userId: currentUserId,
+            host: host,
+            groupTitle: groupTitle,
+            groupContent: groupContent,
+            startDate: startDate,
+            endDate: endDate,
+            limit: limit,
+            remindHours: remindHours,
+            locationData: locationData,
+            initMember: initMemberStr
+        };
+
+        const actionName = (pageMode === 'edit') ? 'editGroup' : 'createGroup';
+        const successTitle = (pageMode === 'edit') ? '修改成功' : '建立成功';
+
+        isSubmitting = true;
+        if (btn) btn.disabled = true;
+        showLoading(true, (pageMode === 'edit') ? '儲存修改中...' : '建立揪團中...');
+
+        callGasApi(actionName, payload, function(res) {
+            isSubmitting = false;
+            if (btn) btn.disabled = false;
+            showLoading(false);
+
+            if (!res || !res.success) {
+                if (res && res.code === 'NOT_HOST' && res.redirectUrl) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '無修改權限',
+                        text: res.error || '僅主揪本人可修改此揪團',
+                        confirmButtonColor: '#4a8c72'
+                    }).then(() => {
+                        window.location.replace(res.redirectUrl);
+                    });
+                    return;
+                }
+                alertError((res && res.error) ? res.error : '送出失敗，請稍後再試');
+                return;
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: successTitle,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#4a8c72'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    closeCurrentPage(res.seqId || seqId);
+                }
+            });
+        }, function(err) {
+            isSubmitting = false;
+            if (btn) btn.disabled = false;
+            alertError('錯誤: ' + err);
+        });
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escapeHtmlAttr(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '&quot;');
+    }
+</script>
+</body>
+
+</html>
