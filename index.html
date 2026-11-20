@@ -245,19 +245,29 @@
             line-height: 1;
         }
 
-        .quick-duration-row {
+        .quick-duration-wrap {
             display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
         }
 
         .quick-duration-label {
-            font-size: 0.78rem;
+            font-size: 0.82rem;
             color: var(--text-sub);
-            margin-right: 2px;
-            font-weight: 500;
+            font-weight: 600;
+        }
+
+        .quick-duration-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quick-duration-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .duration-chip {
@@ -265,8 +275,8 @@
             color: #475569;
             border: 1px solid #cbd5e1;
             border-radius: 999px;
-            padding: 5px 11px;
-            font-size: 0.78rem;
+            padding: 7px 14px;
+            font-size: 0.84rem;
             font-weight: 600;
             font-family: inherit;
             cursor: pointer;
@@ -1064,6 +1074,17 @@
                 grid-template-columns: 1fr 1fr;
             }
 
+            .quick-duration-groups {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .duration-chip {
+                padding: 5px 12px;
+                font-size: 0.8rem;
+            }
+
             .member-grid {
                 grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
             }
@@ -1216,13 +1237,19 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="quick-duration-row">
+                        <div class="quick-duration-wrap">
                             <span class="quick-duration-label">⏱️ 增加結束時間（可連按累加）：</span>
-                            <button type="button" class="duration-chip" onclick="addQuickDuration(15)">+15分鐘</button>
-                            <button type="button" class="duration-chip" onclick="addQuickDuration(30)">+30分鐘</button>
-                            <button type="button" class="duration-chip" onclick="addQuickDuration(60)">+1小時</button>
-                            <button type="button" class="duration-chip" onclick="addQuickDuration(120)">+2小時</button>
-                            <button type="button" class="duration-chip" onclick="addQuickDuration(180)">+3小時</button>
+                            <div class="quick-duration-groups">
+                                <div class="quick-duration-group">
+                                    <button type="button" class="duration-chip" onclick="addQuickDuration(15)">+15分鐘</button>
+                                    <button type="button" class="duration-chip" onclick="addQuickDuration(30)">+30分鐘</button>
+                                </div>
+                                <div class="quick-duration-group">
+                                    <button type="button" class="duration-chip" onclick="addQuickDuration(60)">+1小時</button>
+                                    <button type="button" class="duration-chip" onclick="addQuickDuration(120)">+2小時</button>
+                                    <button type="button" class="duration-chip" onclick="addQuickDuration(180)">+3小時</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
