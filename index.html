@@ -659,6 +659,77 @@
             box-shadow: 0 2px 6px rgba(74, 140, 114, 0.16);
         }
 
+        .member-chip.is-waitlisted {
+            border-color: #f59e0b;
+            background: #fffbeb;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .member-waitlist-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #b45309;
+            line-height: 1.1;
+        }
+
+        .waitlist-card {
+            border-color: #fcd34d;
+            background: #fffbeb;
+        }
+
+        .waitlist-count-pill {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .waitlist-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .waitlist-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid #fcd34d;
+            font-size: 0.86rem;
+            font-weight: 600;
+            color: #78350f;
+        }
+
+        .waitlist-rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: #f59e0b;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+
+        .waitlist-empty {
+            width: 100%;
+            font-size: 0.86rem;
+            color: var(--text-muted);
+            padding: 4px 0;
+        }
+
+        .waitlist-hint {
+            margin: 8px 0 0;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
         .member-option input:disabled + .member-chip {
             background-color: #e2e8f0;
             border-color: #cbd5e1;
@@ -1388,6 +1459,15 @@
                     <div id="initMemberBlock" class="member-grid"></div>
                 </section>
 
+                <section id="waitlistBox" class="section-card waitlist-card hidden">
+                    <div class="member-header-row">
+                        <label>⏳ 目前候補名單</label>
+                        <span class="member-count-pill waitlist-count-pill" id="waitlistCountBadge">0 人候補</span>
+                    </div>
+                    <div id="waitlistList" class="waitlist-list"></div>
+                    <p class="waitlist-hint">依照登記順位排列；若調高人數上限，系統會依序自動遞補並於群組通知。</p>
+                </section>
+
                 <div class="submit-bar">
                     <button type="submit" id="submitBtn" class="submit-btn" onclick="submitGroupForm(this); return false;">送出揪團</button>
                 </div>
@@ -2023,6 +2103,8 @@
         document.getElementById('memberLabel').textContent = '👥 內建成員';
         document.getElementById('submitBtn').textContent = '送出建立揪團';
         document.getElementById('seqId').value = '';
+        const waitlistBox = document.getElementById('waitlistBox');
+        if (waitlistBox) waitlistBox.classList.add('hidden');
 
         let hostValue = '';
         let hostDisplayName = '未知';
@@ -2078,6 +2160,13 @@
         let hostDisplayName = '主揪';
         let memberHtml = '';
 
+        const waitlistArr = Array.isArray(info.waitlist) ? info.waitlist : [];
+        const waitlistPosMap = new Map();
+        waitlistArr.forEach((w, idx) => {
+            const wId = String(w?.id || w || '').trim().toLowerCase();
+            if (wId && !waitlistPosMap.has(wId)) waitlistPosMap.set(wId, Number(w?.waitlistPos) || (idx + 1));
+        });
+
         memberList.forEach((m, idx) => {
             const mIdLower = String(m.id).trim().toLowerCase();
             const isHost = mIdLower === hostIdLower;
@@ -2093,13 +2182,29 @@
 
             if (!isHost) {
                 const isJoined = joinedLowerSet.has(mIdLower);
+                const wlPos = !isJoined ? waitlistPosMap.get(mIdLower) : null;
                 memberHtml += `
                     <div class="member-option" data-name="${safeNameAttr}">
                         <input type="checkbox" name="initMember" id="cb_${idx}" value="${safeVal}" ${isJoined ? 'checked disabled' : ''}>
-                        <label class="member-chip" for="cb_${idx}">${safeName}${isJoined ? ' (已入)' : ''}</label>
+                        <label class="member-chip${wlPos ? ' is-waitlisted' : ''}" for="cb_${idx}">${safeName}${isJoined ? ' (已入)' : ''}${wlPos ? `<span class="member-waitlist-tag">(候補 #${wlPos})</span>` : ''}</label>
                     </div>`;
             }
         });
+
+        const waitlistBox = document.getElementById('waitlistBox');
+        const waitlistCountBadge = document.getElementById('waitlistCountBadge');
+        const waitlistListEl = document.getElementById('waitlistList');
+        if (waitlistBox && waitlistCountBadge && waitlistListEl) {
+            waitlistBox.classList.remove('hidden');
+            waitlistCountBadge.textContent = `${waitlistArr.length} 人候補`;
+            waitlistListEl.innerHTML = waitlistArr.length > 0
+                ? waitlistArr.map((w, idx) => {
+                    const pos = Number(w?.waitlistPos) || (idx + 1);
+                    const safeWaitName = escapeHtml(w?.name || w?.id || String(w));
+                    return `<span class="waitlist-chip"><span class="waitlist-rank">#${pos}</span><span>${safeWaitName}</span></span>`;
+                }).join('')
+                : '<span class="waitlist-empty">目前無人候補</span>';
+        }
 
         memberHtml += `<div class="member-empty-state" id="memberEmptyState">查無符合關鍵字的群友</div>`;
         document.getElementById('headerHostChip').textContent = '主揪：' + hostDisplayName;
