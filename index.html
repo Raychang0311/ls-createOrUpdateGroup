@@ -897,6 +897,21 @@
             fill: #ffffff !important;
         }
 
+        .flatpickr-innerContainer,
+        .flatpickr-rContainer,
+        .flatpickr-weekdays,
+        .flatpickr-days,
+        .dayContainer {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .flatpickr-rContainer {
+            flex: 1 1 100% !important;
+        }
+
         .flatpickr-weekdays {
             background: var(--primary-tint) !important;
             height: 34px !important;
@@ -916,18 +931,10 @@
             max-width: none !important;
         }
 
-        .flatpickr-days,
-        .dayContainer {
-            width: 100% !important;
-            min-width: 100% !important;
-            max-width: 100% !important;
-        }
-
         .dayContainer {
             display: grid !important;
             grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
             padding: 2px 0 6px !important;
-            box-sizing: border-box !important;
         }
 
         .flatpickr-day {
